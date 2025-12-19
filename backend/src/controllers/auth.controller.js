@@ -59,11 +59,11 @@ exports.signup = async (req, res) => {
 // LOGIN
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+   const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ message: "Email and password required" });
 
     const user = await User.findOne({ email });
-    if (!user || !user.password) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user || !user.password) return res.status(400).json({ message: "User not found please signup" });
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(400).json({ message: "Invalid credentials" });
