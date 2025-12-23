@@ -1,16 +1,20 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-
+import { useDispatch, useSelector } from "react-redux";
+import { signupUser } from "../store/authSlice";
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Name:", name, "Email:", email, "Password:", password);
-  };
+const dispatch = useDispatch();
+const { loading, error } = useSelector((state) => state.auth);
+
+const handleSubmit = (e) => {
+  e.preventDefault();
+  dispatch(signupUser({ name, email, password }));
+};
 
   return (
     <div className="flex h-[700px] w-full">
@@ -168,11 +172,13 @@ export default function Signup() {
           </div>
 
           <button
+           disabled={loading}
             type="submit"
             className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity"
           >
-            Create account
+            {loading ? "Creating account..." : "Sign up"}
           </button>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
           <p className="text-gray-500/90 text-sm mt-4">
             Already have an account?{" "}
