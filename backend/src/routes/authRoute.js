@@ -5,7 +5,7 @@ const authCtrl = require("../controllers/auth.controller");
 
 router.post("/signup", authCtrl.signup);
 router.post("/login", authCtrl.login);
-router.post("/google", authCtrl.googleSignIn);
+router.post("/google", authCtrl.googleLogin);
 
 
 router.post("/refresh_token", authCtrl.refreshToken);

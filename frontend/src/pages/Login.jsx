@@ -2,7 +2,15 @@ import { Link } from "react-router-dom";
 
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../store/authSlice";
+
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../store/authSlice";
+import { GoogleLogin } from "@react-oauth/google";
+import api from "../api/axios";
+import { googleLoginUser } from "../store/authSlice";
+
 
 export default function Login() {
 
@@ -11,6 +19,19 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
 const dispatch = useDispatch();
 const { loading, error } = useSelector((state) => state.auth);
+const navigate = useNavigate();
+const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+useEffect(() => {
+  if (isAuthenticated && user) {
+    if (user.role === "admin") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  }
+}, [isAuthenticated, user, navigate]);
+
 
   
   const handleSubmit = (e) => {
@@ -20,13 +41,13 @@ const { loading, error } = useSelector((state) => state.auth);
 
   return (
     <div className="flex h-[700px] w-full">
-      <div className="w-full hidden md:inline-block">
+      {/* <div className="w-full hidden md:inline-block">
         <img
           className="h-full"
           src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/leftSideImage.png"
           alt="leftSideImage"
         />
-      </div>
+      </div> */}
 
       <div className="w-full flex flex-col items-center justify-center">
         <form className="md:w-96 w-80 flex flex-col items-center justify-center" onSubmit={handleSubmit}>
@@ -35,15 +56,27 @@ const { loading, error } = useSelector((state) => state.auth);
             Welcome back! Please sign in to continue
           </p>
 
-          <button
-            type="button"
-            className="w-full mt-8 bg-gray-500/10 flex items-center justify-center h-12 rounded-full"
-          >
-            <img
-              src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleLogo.svg"
-              alt="googleLogo"
-            />
-          </button>
+ <GoogleLogin
+  onSuccess={(credentialResponse) => {
+    console.log("Google response:", credentialResponse);
+
+    // 🔥 THIS is the token we need
+    if (!credentialResponse?.credential) {
+      console.error("No ID token received from Google");
+      return;
+    }
+
+    dispatch(
+      googleLoginUser({
+        idToken: credentialResponse.credential, // ✅ CORRECT
+      })
+    );
+  }}
+  onError={() => {
+    console.error("Google Login Failed");
+  }}
+/>
+
 
           <div className="flex items-center gap-4 w-full my-5">
             <div className="w-full h-px bg-gray-300/90"></div>

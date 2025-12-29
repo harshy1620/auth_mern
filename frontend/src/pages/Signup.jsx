@@ -2,6 +2,12 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { signupUser } from "../store/authSlice";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import api from "../api/axios";
+import { googleLoginUser } from "../store/authSlice";
+
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,6 +16,19 @@ export default function Signup() {
 
 const dispatch = useDispatch();
 const { loading, error } = useSelector((state) => state.auth);
+const navigate = useNavigate();
+const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+useEffect(() => {
+  if (isAuthenticated && user) {
+    if (user.role === "admin") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  }
+}, [isAuthenticated, user, navigate]);
+
 
 const handleSubmit = (e) => {
   e.preventDefault();
@@ -19,13 +38,13 @@ const handleSubmit = (e) => {
   return (
     <div className="flex h-[700px] w-full">
       {/* Left image */}
-      <div className="w-full hidden md:inline-block">
+      {/* <div className="w-full hidden md:inline-block">
         <img
           className="h-full"
           src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/leftSideImage.png"
           alt="leftSideImage"
         />
-      </div>
+      </div> */}
 
       {/* Right form */}
       <div className="w-full flex flex-col items-center justify-center">
@@ -39,15 +58,19 @@ const handleSubmit = (e) => {
           </p>
 
           {/* Google signup */}
-          <button
-            type="button"
-            className="w-full mt-8 bg-gray-500/10 flex items-center justify-center h-12 rounded-full"
-          >
-            <img
-              src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleLogo.svg"
-              alt="googleLogo"
-            />
-          </button>
+    <GoogleLogin
+  onSuccess={(credentialResponse) => {
+    dispatch(
+      googleLoginUser({
+        idToken: credentialResponse.credential,
+      })``
+    );
+  }}
+  onError={() => {
+    console.log("Google Login Failed");
+  }}
+/>
+
 
           <div className="flex items-center gap-4 w-full my-5">
             <div className="w-full h-px bg-gray-300/90"></div>
