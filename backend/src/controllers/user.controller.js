@@ -39,7 +39,6 @@ exports.updateUserRole = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    // 🔥 CRITICAL FIX
     if (String(req.user.id) === String(req.params.id)) {
       return res
         .status(400)

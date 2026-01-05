@@ -1,6 +1,8 @@
 // src/controllers/auth.controller.js
 const bcrypt = require("bcryptjs");
 const User = require("../models/User.model");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const RefreshTokenModel = require("../models/RefreshToken.model");
 const { createAccessToken, createRefreshToken, verifyRefreshToken, computeRefreshTokenExpiry } = require("../utils/token.util");
 const { OAuth2Client } = require("google-auth-library");
@@ -32,6 +34,30 @@ const createAndStoreRefreshToken = async (userPayload, res) => {
   sendRefreshTokenCookie(res, refreshToken, expiresAt);
   return refreshToken;
 };
+
+//Email helper
+const sendResetEmail = async (email, resetUrl) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: `"Auth App" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Reset your password",
+    html: `
+      <p>You requested a password reset.</p>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetUrl}">${resetUrl}</a>
+      <p>This link expires in 15 minutes.</p>
+    `,
+  });
+};
+
 
 // SIGNUP
 exports.signup = async (req, res) => {
@@ -217,7 +243,7 @@ exports.googleLogin = async (req, res) => {
       user = await User.create({
         name,
         email,
-        password: null,
+        googleId: payload.sub,
         role: "user",
       });
     }
@@ -244,3 +270,105 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
+// POST /auth/forgot-password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    // SECURITY: do NOT reveal if email exists
+    if (!user) {
+      return res.json({ message: "If email exists, reset link sent" });
+    }
+
+    // Google users cannot reset password
+    if (user.googleId) {
+      return res
+        .status(400)
+        .json({ message: "Google users cannot reset password" });
+    }
+
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    //  Hash token before saving
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    //  Save to DB
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 mins
+    await user.save();
+
+    // Send email
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+    await sendResetEmail(user.email, resetUrl);
+
+    return res.json({ message: "If email exists, reset link sent" });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// POST /auth/reset-password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Token and password required" });
+    }
+
+    if (newPassword.length < 8) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters" });
+    }
+
+    // Hash token to match DB
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Find valid token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    // Clear reset fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    // Revoke all refresh tokens (security)
+    await RefreshTokenModel.updateMany(
+      { user: user._id },
+      { revoked: true }
+    );
+
+    return res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

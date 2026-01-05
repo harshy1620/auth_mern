@@ -11,4 +11,8 @@ router.post("/google", authCtrl.googleLogin);
 router.post("/refresh_token", authCtrl.refreshToken);
 router.post("/logout", authCtrl.logout);
 
+router.post("/forgot-password", authCtrl.forgotPassword);
+router.post("/reset-password", authCtrl.resetPassword);
+
+
 module.exports = router;
