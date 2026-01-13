@@ -3,7 +3,7 @@ import store from "../store";
 import { setCredentials, logoutUser } from "../store/authSlice";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000",
+ baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -35,7 +35,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "http://localhost:5000/auth/refresh_token",
+       `${import.meta.env.VITE_API_URL}/auth/refresh_token`,
           {},
           { withCredentials: true }
         );
