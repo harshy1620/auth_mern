@@ -8,36 +8,31 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../store/authSlice";
 import { GoogleLogin } from "@react-oauth/google";
-import api from "../api/axios";
 import { googleLoginUser } from "../store/authSlice";
 
-
 export default function Login() {
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-const dispatch = useDispatch();
-const { loading, error } = useSelector((state) => state.auth);
-const navigate = useNavigate();
-const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-useEffect(() => {
-  if (isAuthenticated && user) {
-    if (user.role === "admin") {
-      navigate("/admin/dashboard");
-    } else {
-      navigate("/dashboard");
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }
-}, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
-
-  
   const handleSubmit = (e) => {
-  e.preventDefault();
-  dispatch(loginUser({ email, password }));
-};
+    e.preventDefault();
+    dispatch(loginUser({ email, password }));
+  };
 
   return (
     <div className="flex h-[700px] w-full">
@@ -50,33 +45,35 @@ useEffect(() => {
       </div> */}
 
       <div className="w-full flex flex-col items-center justify-center">
-        <form className="md:w-96 w-80 flex flex-col items-center justify-center" onSubmit={handleSubmit}>
+        <form
+          className="md:w-96 w-80 flex flex-col items-center justify-center"
+          onSubmit={handleSubmit}
+        >
           <h2 className="text-4xl text-gray-900 font-medium">Sign in</h2>
           <p className="text-sm text-gray-500/90 mt-3">
             Welcome back! Please sign in to continue
           </p>
 
- <GoogleLogin
-  onSuccess={(credentialResponse) => {
-    console.log("Google response:", credentialResponse);
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              console.log("Google response:", credentialResponse);
 
-    // 🔥 THIS is the token we need
-    if (!credentialResponse?.credential) {
-      console.error("No ID token received from Google");
-      return;
-    }
+              // 🔥 THIS is the token we need
+              if (!credentialResponse?.credential) {
+                console.error("No ID token received from Google");
+                return;
+              }
 
-    dispatch(
-      googleLoginUser({
-        idToken: credentialResponse.credential, // ✅ CORRECT
-      })
-    );
-  }}
-  onError={() => {
-    console.error("Google Login Failed");
-  }}
-/>
-
+              dispatch(
+                googleLoginUser({
+                  idToken: credentialResponse.credential, 
+                })
+              );
+            }}
+            onError={() => {
+              console.error("Google Login Failed");
+            }}
+          />
 
           <div className="flex items-center gap-4 w-full my-5">
             <div className="w-full h-px bg-gray-300/90"></div>
@@ -182,20 +179,18 @@ useEffect(() => {
                 Remember me
               </label>
             </div>
-            <a className="text-sm underline" href="#">
+            <Link to="/forgot-password" className="underline text-sm">
               Forgot password?
-            </a>
+            </Link>
           </div>
-<button
-  type="submit"
-  disabled={loading}
-  className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity disabled:opacity-60"
->
-  {loading ? "Logging in..." : "Login"}
-</button>
-{error && (
-  <p className="text-red-500 text-sm mt-2">{error}</p>
-)}
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-8 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity disabled:opacity-60"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <p className="text-gray-500/90 text-sm mt-4">
             Don’t have an account?{" "}
             <Link to="/signup" className="text-indigo-400 hover:underline">

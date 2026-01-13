@@ -127,10 +127,19 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format." });
     }
 
-    // Find user by email
+   // 3 Find user
     const user = await User.findOne({ email });
-    if (!user || !user.password) {
-      return res.status(400).json({ message: "Invalid email or password." });
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email or password.",
+      });
+    }
+
+    //  Handle Google-only users
+    if (!user.password) {
+      return res.status(400).json({
+        message: "This account was created using Google. Please sign in with Google.",
+      });
     }
 
     // Compare passwords
@@ -311,7 +320,7 @@ exports.forgotPassword = async (req, res) => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
     await sendResetEmail(user.email, resetUrl);
 
-    return res.json({ message: "If email exists, reset link sent" });
+    return res.json({ message: "password reset link has been sent" });
   } catch (err) {
     console.error("Forgot password error:", err);
     return res.status(500).json({ message: "Server error" });

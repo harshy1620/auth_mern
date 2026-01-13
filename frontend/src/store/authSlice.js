@@ -73,6 +73,39 @@ export const googleLoginUser = createAsyncThunk(
   }
 );
 
+/* ---------------- FORGOT PASSWORD ---------------- */
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (email, thunkAPI) => {
+    try {
+      const res = await api.post("/auth/forgot-password", { email });
+      return res.data.message;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data?.message || "Failed to send reset email"
+      );
+    }
+  }
+);
+
+/* ---------------- RESET PASSWORD ---------------- */
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, password }, thunkAPI) => {
+    try {
+      const res = await api.post(`/auth/reset-password/${token}`, {
+        password,
+      });
+      return res.data.message;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data?.message || "Password reset failed"
+      );
+    }
+  }
+);
+
+
 
 /* -------------------- INITIAL STATE -------------------- */
 const initialState = {
@@ -81,7 +114,8 @@ const initialState = {
   isAuthenticated: false,
   loading: false,
   error: null,
-   authChecked: false, // 🔥 IMPORTANT
+   authChecked: false,
+   successMessage: null,
 };
 
 /* -------------------- SLICE -------------------- */
@@ -174,9 +208,42 @@ const authSlice = createSlice({
 .addCase(googleLoginUser.rejected, (state, action) => {
   state.loading = false;
   state.error = action.payload;
-});
+})
+
+  /* ---------- FORGOT PASSWORD ---------- */
+  .addCase(forgotPassword.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+    state.successMessage = null;
+  })
+  .addCase(forgotPassword.fulfilled, (state, action) => {
+    state.loading = false;
+    state.successMessage = action.payload;
+  })
+  .addCase(forgotPassword.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  })
+
+  /* ---------- RESET PASSWORD ---------- */
+  .addCase(resetPassword.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+    state.successMessage = null;
+  })
+  .addCase(resetPassword.fulfilled, (state, action) => {
+    state.loading = false;
+    state.successMessage = action.payload;
+  })
+  .addCase(resetPassword.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  });
+
 
   },
+
+  
 });
 
 /* -------------------- EXPORTS -------------------- */
