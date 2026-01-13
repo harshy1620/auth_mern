@@ -13,8 +13,8 @@ const sendRefreshTokenCookie = (res, token, expiresAt) => {
   res.cookie("refreshToken", token, {
     httpOnly: true,
     path: "/auth/refresh_token",
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,       
+    sameSite: "none",   
     expires: expiresAt
   });
 };
