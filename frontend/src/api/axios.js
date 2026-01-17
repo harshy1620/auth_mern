@@ -1,7 +1,7 @@
 import axios from "axios";
 import store from "../store";
 import { setCredentials, logoutUser } from "../store/authSlice";
-
+const { isLoggedOut } = store.getState().auth;
 const api = axios.create({
  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
@@ -29,7 +29,8 @@ api.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+       !isLoggedOut
     ) {
       originalRequest._retry = true;
 

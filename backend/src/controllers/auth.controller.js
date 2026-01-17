@@ -13,8 +13,8 @@ const sendRefreshTokenCookie = (res, token, expiresAt) => {
   res.cookie("refreshToken", token, {
     httpOnly: true,
     path: "/auth/refresh_token",
-    secure: true,       
-    sameSite: "none",   
+     secure: process.env.NODE_ENV === "production",    
+   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     expires: expiresAt
   });
 };
@@ -225,7 +225,6 @@ exports.logout = async (req, res) => {
 
 // GOOGLE SIGN-IN (frontend sends idToken)
 exports.googleLogin = async (req, res) => {
-  console.log("Backend GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 
   try {
    if (!req.body) {

@@ -116,6 +116,7 @@ const initialState = {
   error: null,
    authChecked: false,
    successMessage: null,
+   isLoggedOut: false,
 };
 
 /* -------------------- SLICE -------------------- */
@@ -184,6 +185,7 @@ const authSlice = createSlice({
         state.accessToken = null;
         state.isAuthenticated = false;
         state.error = null;
+        state.isLoggedOut = true;
       })
 
       .addCase(logoutUser.rejected, (state, action) => {
